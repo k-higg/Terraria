@@ -9,7 +9,9 @@ if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
     add_compile_options(/arch:AVX2) # Make sure SIMD optimizations take place
 else()
-    add_link_options(-static-libstdc++ -static-libgcc)
+    if(NOT APPLE)
+        add_link_options(-static-libstdc++ -static-libgcc)
+    endif()
     add_compile_options(-mavx2 -mfma) # Make sure SIMD optimizations take place
 endif()
 
@@ -18,7 +20,9 @@ project(Terraria)
 #add_subdirectory()
 
 # define sources
-file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/.*cpp")
+file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+
+message(STATUS "Sources: ${MY_SOURCES}")
 
 add_executable("${CMAKE_PROJECT_NAME}")
 set_property(TARGET "${CMAKE_PROJECT_NAME}" PROPERTY CXX_STANDARD 23)
