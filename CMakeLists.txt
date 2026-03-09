@@ -15,9 +15,15 @@ else()
     add_compile_options(-mavx2 -mfma) # Make sure SIMD optimizations take place
 endif()
 
+# Ensure Raylib is build as a static lib
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build Raylib as a static lib" FORCE)
+
 project(Terraria)
 
-#add_subdirectory()
+# Sub Directories
+add_subdirectory(thirdparty/raylib-5.0)
+add_subdirectory(thirdparty/imgui-docking)
+add_subdirectory(thirdparty/rlimgui)
 
 # define sources
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
@@ -58,4 +64,5 @@ elseif(APPLE OR UNIX)
 endif()
 
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/")
-#target_link_libraries(${PROJECT_NAME} PRIVATE lib)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE raylib_static imgui rlimgui)
