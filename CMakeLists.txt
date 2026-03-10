@@ -20,10 +20,9 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build Raylib as a static lib" FORCE)
 
 project(Terraria)
 
-# Sub Directories
-add_subdirectory(thirdparty/raylib-5.0)
-add_subdirectory(thirdparty/imgui-docking)
-add_subdirectory(thirdparty/rlimgui)
+add_subdirectory(thirdParty/raylib-5.0)
+add_subdirectory(thirdParty/imgui-docking)
+add_subdirectory(thirdParty/rlimgui)
 
 # define sources
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
@@ -63,6 +62,14 @@ elseif(APPLE OR UNIX)
     endif()
 endif()
 
-target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/")
+target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/platform"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/gameLayer"
+)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib_static imgui rlimgui)
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    raylib_static 
+    imgui 
+    rlimgui
+)
