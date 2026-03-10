@@ -66,6 +66,7 @@ target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/platform"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/gameLayer"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/imguiLayer"
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
