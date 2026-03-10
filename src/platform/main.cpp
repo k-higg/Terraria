@@ -22,17 +22,17 @@ int main() {
 
     Overlay::initImGui();
 
-    if ( !initGame() ) {
+    if ( !GameLayer::initGame() ) {
         return 1;
     }
 
     while ( !WindowShouldClose() ) {
         BeginDrawing();
-        ClearBackground(GRAY);
+        ClearBackground(BLACK);
 
         Overlay::beginImGui();
 
-        if ( !updateGame() ) {
+        if ( !GameLayer::updateGame() ) {
             CloseWindow();
         }
 
@@ -43,7 +43,7 @@ int main() {
     Overlay::shutdownImGui();
 
     CloseWindow();
-    closeGame();
+    GameLayer::closeGame();
 
     return 0;
 }

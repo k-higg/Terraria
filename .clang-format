@@ -215,7 +215,7 @@ PackConstructorInitializers: NextLine
 PenaltyBreakAssignment: 2
 PenaltyBreakBeforeFirstCallParameter: 1
 PenaltyBreakBeforeMemberAccess: 150
-PenaltyBreakComment: 300
+PenaltyBreakComment: 1000000 
 PenaltyBreakFirstLessLess: 120
 PenaltyBreakOpenParenthesis: 0
 PenaltyBreakScopeResolution: 500
@@ -257,7 +257,7 @@ RawStringFormats:
     CanonicalDelimiter: pb
     BasedOnStyle: google
 ReferenceAlignment: Right
-ReflowComments: Always
+ReflowComments: Never 
 RemoveBracesLLVM: false
 RemoveEmptyLinesInUnwrappedLines: false
 RemoveParentheses: Leave
