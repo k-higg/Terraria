@@ -28,7 +28,6 @@ int main() {
 
     while ( !WindowShouldClose() ) {
         BeginDrawing();
-        ClearBackground(BLACK);
 
         Overlay::beginImGui();
 
