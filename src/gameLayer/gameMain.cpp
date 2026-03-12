@@ -1,9 +1,14 @@
 #include "gameMain.h"
 
+#include <imgui.h>
 #include <raylib.h>
 
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <fstream>
+#include <iostream>
+#include <string>
 
 #include "assetManager.h"
 #include "gameMap.h"
@@ -61,23 +66,47 @@ bool updateGame() {
     }
 #pragma endregion
 
+#pragma region Block Selector
+    static char id[3]       = "";
+    static uint16_t blockID = 0;
+    ImGui::Begin("Debug Menu");
+    ImGui::Text("Block ID: ");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(110.f);
+    ImGui::InputTextWithHint("###ID", "0 - 53", id, IM_ARRAYSIZE(id));
+    ImGui::SameLine();
+    if ( ImGui::SmallButton("Clear") ) {
+        id[0]   = '\0';
+        blockID = 0;
+    }
+    if ( strlen(id) > 0 ) {
+        blockID = static_cast<uint16_t>(std::stoi(id));
+    }
+    blockID = std::min(blockID, (uint16_t)(Block::BLOCKS_COUNT - 1));
+
+#pragma endregion
+
+#pragma region Mouse Logic
     Vector2 worldPos = GetScreenToWorld2D(GetMousePosition(), gameData.camera);
     int blockX       = (int)floor(worldPos.x);
     int blockY       = (int)floor(worldPos.y);
 
-    if ( IsMouseButtonDown(MOUSE_BUTTON_LEFT) ) {
-        auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
-        if ( b ) {
-            b->type = Block::gold;
+    if ( !ImGui::IsWindowHovered() || !ImGui::IsWindowFocused() ) {
+        if ( IsMouseButtonDown(MOUSE_BUTTON_LEFT) ) {
+            auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
+            if ( b ) {
+                b->type = blockID;
+            }
         }
-    }
 
-    if ( IsMouseButtonDown(MOUSE_BUTTON_RIGHT) ) {
-        auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
-        if ( b ) {
-            *b = {};
+        if ( IsMouseButtonDown(MOUSE_BUTTON_RIGHT) ) {
+            auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
+            if ( b ) {
+                *b = {};
+            }
         }
     }
+#pragma endregion
 
     BeginMode2D(gameData.camera);
 
@@ -100,6 +129,7 @@ bool updateGame() {
 
     EndMode2D();
 
+    ImGui::End();
     return true;
 }
 
@@ -108,5 +138,4 @@ void closeGame() {
     f << "\nCLOSED\n";
     f.close();
 }
-
 };  // namespace GameLayer
