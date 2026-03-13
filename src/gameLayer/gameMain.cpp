@@ -11,6 +11,7 @@
 #include "assetManager.h"
 #include "gameMap.h"
 #include "helpers.h"
+#include "raymath.h"
 
 namespace GameLayer {
 
@@ -68,22 +69,6 @@ bool updateGame() {
     const size_t idSize     = 3;
     static char id[idSize]  = "";
     static uint16_t blockID = 0;
-    /*
-    ImGui::Begin("Debug Menu");
-    ImGui::Text("Block ID: ");
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(110.f);
-    ImGui::InputTextWithHint("###ID", "0 - 53", id, IM_ARRAYSIZE(id));
-    ImGui::SameLine();
-    if ( ImGui::SmallButton("Clear") ) {
-        id[0]   = '\0';
-        blockID = 0;
-    }
-    if ( strlen(id) > 0 ) {
-        blockID = static_cast<uint16_t>(std::stoi(id));
-    }
-    blockID = std::min(blockID, (uint16_t)(Block::BLOCKS_COUNT - 1));
-    */
     startDebugMenu(id, idSize, &blockID);
 #pragma endregion
 
@@ -113,14 +98,28 @@ bool updateGame() {
 
     BeginMode2D(gameData.camera);
 
-    for ( int y = 0; y < gameData.gameMap.h; y++ ) {
-        for ( int x = 0; x < gameData.gameMap.w; x++ ) {
+    Vector2 topLeftView     = GetScreenToWorld2D({0, 0}, gameData.camera);
+    Vector2 bottomRightView = GetScreenToWorld2D(
+        {(float)GetScreenWidth(), (float)GetScreenHeight()}, gameData.camera);
+
+    int startXView = (int)floorf(topLeftView.x - 1);
+    int endXView   = (int)ceilf(bottomRightView.x + 1);
+    int startYView = (int)floorf(topLeftView.y - 1);
+    int endYView   = (int)ceilf(bottomRightView.y + 1);
+
+    startXView = Clamp(startXView, 0, gameData.gameMap.w - 1);
+    endXView   = Clamp(endXView, 0, bottomRightView.x - 1);
+    startYView = Clamp(startYView, 0, gameData.gameMap.h - 1);
+    endYView   = Clamp(endYView, 0, bottomRightView.y - 1);
+
+    for ( int y = startYView; y <= endYView; y++ ) {
+        for ( int x = startXView; x <= endXView; x++ ) {
             auto &b = gameData.gameMap.getBlockUnsafe(x, y);
 
             if ( b.type != Block::air ) {
                 DrawTexturePro(assetManager.textures,
-                               getTextureAtlas(b.type, 0, 32, 32),
-                               {(float)x, (float)y, 1, 1}, {}, 0.f, WHITE);
+                               getTextureAtlas(x, y, 32, 32),
+                               {(float)x, (float)y, 1, 1}, {0, 0}, 0.f, WHITE);
             }
         }
     }
