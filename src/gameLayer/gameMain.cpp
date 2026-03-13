@@ -5,9 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdint>
 #include <fstream>
-#include <iostream>
 #include <string>
 
 #include "assetManager.h"
@@ -67,8 +65,10 @@ bool updateGame() {
 #pragma endregion
 
 #pragma region Block Selector
-    static char id[3]       = "";
+    const size_t idSize     = 3;
+    static char id[idSize]  = "";
     static uint16_t blockID = 0;
+    /*
     ImGui::Begin("Debug Menu");
     ImGui::Text("Block ID: ");
     ImGui::SameLine();
@@ -83,7 +83,8 @@ bool updateGame() {
         blockID = static_cast<uint16_t>(std::stoi(id));
     }
     blockID = std::min(blockID, (uint16_t)(Block::BLOCKS_COUNT - 1));
-
+    */
+    startDebugMenu(id, idSize, &blockID);
 #pragma endregion
 
 #pragma region Mouse Logic
@@ -106,6 +107,8 @@ bool updateGame() {
             }
         }
     }
+
+    endDebugMenu();
 #pragma endregion
 
     BeginMode2D(gameData.camera);
@@ -129,7 +132,6 @@ bool updateGame() {
 
     EndMode2D();
 
-    ImGui::End();
     return true;
 }
 
@@ -138,4 +140,24 @@ void closeGame() {
     f << "\nCLOSED\n";
     f.close();
 }
+
+void startDebugMenu(char *id, const size_t idSize, uint16_t *blockID) {
+    ImGui::Begin("Debug Menu");
+    ImGui::Text("Block ID: ");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(110.f);
+    ImGui::InputTextWithHint("###ID", "0 - 53", id, idSize);
+    ImGui::SameLine();
+    if ( ImGui::SmallButton("Clear") ) {
+        id[0]    = '\0';
+        *blockID = 0;
+    }
+    if ( strlen(id) > 0 ) {
+        *blockID = static_cast<uint16_t>(std::stoi(id));
+    }
+    *blockID = std::min(*blockID, (uint16_t)(Block::BLOCKS_COUNT - 1));
+}
+
+void endDebugMenu() { ImGui::End(); }
+
 };  // namespace GameLayer
