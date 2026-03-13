@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <stdexcept>
 #include <string>
 
 #include "assetManager.h"
@@ -66,10 +67,12 @@ bool updateGame() {
 #pragma endregion
 
 #pragma region Block Selector
-    const size_t idSize     = 3;
-    static char id[idSize]  = "";
+    static char id[3]       = "";
     static uint16_t blockID = 0;
-    startDebugMenu(id, idSize, &blockID);
+    Block::Type blockType   = Block::Type::air;
+    startDebugMenu(id, sizeof(id), &blockID);
+    blockType = static_cast<Block::Type>(blockID);
+
 #pragma endregion
 
 #pragma region Mouse Logic
@@ -81,7 +84,11 @@ bool updateGame() {
         if ( IsMouseButtonDown(MOUSE_BUTTON_LEFT) ) {
             auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
             if ( b ) {
-                b->type = blockID;
+                b->type = blockType;
+                DrawTexturePro(assetManager.textures,
+                               getTextureAtlas(b->type, 0, 32, 32),
+                               {(float)blockX, (float)blockY, 1, 1}, {0.f, 0.f},
+                               0.f, WHITE);
             }
         }
 
@@ -118,7 +125,7 @@ bool updateGame() {
 
             if ( b.type != Block::air ) {
                 DrawTexturePro(assetManager.textures,
-                               getTextureAtlas(x, y, 32, 32),
+                               getTextureAtlas(b.type, 0, 32, 32),
                                {(float)x, (float)y, 1, 1}, {0, 0}, 0.f, WHITE);
             }
         }
@@ -145,14 +152,19 @@ void startDebugMenu(char *id, const size_t idSize, uint16_t *blockID) {
     ImGui::Text("Block ID: ");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(110.f);
-    ImGui::InputTextWithHint("###ID", "0 - 53", id, idSize);
+    ImGui::InputTextWithHint("###ID", "0 - 53", id, 3);
     ImGui::SameLine();
     if ( ImGui::SmallButton("Clear") ) {
         id[0]    = '\0';
         *blockID = 0;
     }
     if ( strlen(id) > 0 ) {
-        *blockID = static_cast<uint16_t>(std::stoi(id));
+        try {
+            *blockID = static_cast<uint16_t>(std::stoi(id));
+        } catch ( std::invalid_argument const &e ) {
+            id[0]    = '\0';
+            *blockID = 0;
+        }
     }
     *blockID = std::min(*blockID, (uint16_t)(Block::BLOCKS_COUNT - 1));
 }

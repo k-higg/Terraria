@@ -5,4 +5,5 @@ namespace GameLayer {
 
 Rectangle getTextureAtlas(int x, int y, int cellSizePixelsX,
                           int cellSizePixelsY);
-}
+
+}  // namespace GameLayer
