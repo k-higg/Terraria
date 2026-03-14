@@ -127,9 +127,24 @@ bool updateGame() {
                                     ? assetManager.tree
                                     : assetManager.textures;
 
-            DrawTexturePro(texture, getTextureAtlas(b.type, 0, 32, 32),
-                           {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f}, 0.f,
-                           WHITE);
+            // IF woodLog check below, and left/right of current block placement
+            // TODO: This sort of works but isn't really what I'm attempting to do
+            if ( b.type == Block::Type::woodLog ) {
+                auto block = gameData.gameMap.getBlockSafe(x, y + 1);
+                if ( block->type == Block::Type::woodLog ) {
+                    DrawTexturePro(texture, getTextureAtlas(1, 0, 32, 32),
+                                   {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f},
+                                   0.f, WHITE);
+                } else {
+                    DrawTexturePro(texture, getTextureAtlas(0, 0, 32, 32),
+                                   {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
+                                   WHITE);
+                }
+            } else {
+                DrawTexturePro(texture, getTextureAtlas(b.type, 0, 32, 32),
+                               {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f}, 0.f,
+                               WHITE);
+            }
         }
     }
 
