@@ -7,5 +7,4 @@ Rectangle getTextureAtlas(int x, int y, int cellSizePixelsX,
     return Rectangle{(float)x * cellSizePixelsX, (float)y * cellSizePixelsY,
                      (float)cellSizePixelsX, (float)cellSizePixelsY};
 }
-
 }  // namespace GameLayer

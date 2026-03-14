@@ -85,10 +85,6 @@ bool updateGame() {
             auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
             if ( b ) {
                 b->type = blockType;
-                DrawTexturePro(assetManager.textures,
-                               getTextureAtlas(b->type, 0, 32, 32),
-                               {(float)blockX, (float)blockY, 1, 1}, {0.f, 0.f},
-                               0.f, WHITE);
             }
         }
 
@@ -123,11 +119,17 @@ bool updateGame() {
         for ( int x = startXView; x <= endXView; x++ ) {
             auto &b = gameData.gameMap.getBlockUnsafe(x, y);
 
-            if ( b.type != Block::air ) {
-                DrawTexturePro(assetManager.textures,
-                               getTextureAtlas(b.type, 0, 32, 32),
-                               {(float)x, (float)y, 1, 1}, {0, 0}, 0.f, WHITE);
+            if ( b.type == Block::Type::air ) {
+                continue;
             }
+
+            Texture2D texture = b.type == Block::Type::woodLog
+                                    ? assetManager.tree
+                                    : assetManager.textures;
+
+            DrawTexturePro(texture, getTextureAtlas(b.type, 0, 32, 32),
+                           {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f}, 0.f,
+                           WHITE);
         }
     }
 
