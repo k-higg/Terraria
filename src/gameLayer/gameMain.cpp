@@ -128,15 +128,45 @@ bool updateGame() {
                                     : assetManager.textures;
 
             // IF woodLog check below, and left/right of current block placement
+            // base case is trunk touching ground
+            // if trunk and no leaves around trunk
+            // if leaves on left and right, trunk with leaves on left and right
+            // if leaves all around trunk with leaves all around
+            // if leaves on left or right, trunk with leaves on left or right
             // TODO: This sort of works but isn't really what I'm attempting to do
             if ( b.type == Block::Type::woodLog ) {
-                auto block = gameData.gameMap.getBlockSafe(x, y + 1);
-                if ( block->type == Block::Type::woodLog ) {
-                    DrawTexturePro(texture, getTextureAtlas(1, 0, 32, 32),
+                auto blockAbove = gameData.gameMap.getBlockSafe(x, y - 1);
+                auto blockLeft  = gameData.gameMap.getBlockSafe(x - 1, y);
+                auto blockRight = gameData.gameMap.getBlockSafe(x + 1, y);
+                auto blockBelow = gameData.gameMap.getBlockSafe(x, y + 1);
+                if ( blockBelow->type == Block::Type::woodLog &&
+                     blockLeft->type == Block::Type::leaves &&
+                     blockRight->type == Block::Type::leaves &&
+                     blockAbove->type == Block::Type::leaves ) {
+                    DrawTexturePro(texture, getTextureAtlas(5, 0, 32, 32),
                                    {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f},
                                    0.f, WHITE);
-                } else {
+                } else if ( blockLeft->type == Block::Type::leaves &&
+                            blockRight->type == Block::Type::leaves ) {
+                    DrawTexturePro(texture, getTextureAtlas(1, 0, 32, 32),
+                                   {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
+                                   WHITE);
+                } else if ( blockLeft->type == Block::Type::leaves &&
+                            blockRight->type != Block::Type::leaves ) {
+                    DrawTexturePro(texture, getTextureAtlas(3, 0, 32, 32),
+                                   {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
+                                   WHITE);
+                } else if ( blockRight->type == Block::Type::leaves &&
+                            blockLeft->type != Block::Type::leaves ) {
+                    DrawTexturePro(texture, getTextureAtlas(2, 0, 32, 32),
+                                   {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
+                                   WHITE);
+                } else if ( blockBelow->type == Block::Type::woodLog ) {
                     DrawTexturePro(texture, getTextureAtlas(0, 0, 32, 32),
+                                   {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
+                                   WHITE);
+                } else {
+                    DrawTexturePro(texture, getTextureAtlas(4, 0, 32, 32),
                                    {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
                                    WHITE);
                 }
