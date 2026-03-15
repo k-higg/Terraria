@@ -146,44 +146,7 @@ bool updateGame() {
                                     : assetManager.textures;
 
             if ( b.type == Block::Type::woodLog ) {
-                auto blockAbove = gameData.gameMap.getBlockSafe(x, y - 1);
-                auto blockLeft  = gameData.gameMap.getBlockSafe(x - 1, y);
-                auto blockRight = gameData.gameMap.getBlockSafe(x + 1, y);
-                auto blockBelow = gameData.gameMap.getBlockSafe(x, y + 1);
-                if ( blockBelow->type == Block::Type::woodLog &&
-                     blockLeft->type == Block::Type::leaves &&
-                     blockRight->type == Block::Type::leaves &&
-                     blockAbove->type == Block::Type::leaves ) {
-                    DrawTexturePro(texture, getTextureAtlas(5, 0, 32, 32),
-                                   {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f},
-                                   0.f, WHITE);
-                } else if ( blockLeft->type == Block::Type::leaves &&
-                            blockRight->type == Block::Type::leaves &&
-                            blockBelow->type == Block::Type::woodLog ) {
-                    DrawTexturePro(texture, getTextureAtlas(1, 0, 32, 32),
-                                   {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
-                                   WHITE);
-                } else if ( blockLeft->type == Block::Type::leaves &&
-                            blockRight->type != Block::Type::leaves &&
-                            blockBelow->type == Block::Type::woodLog ) {
-                    DrawTexturePro(texture, getTextureAtlas(3, 0, 32, 32),
-                                   {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
-                                   WHITE);
-                } else if ( blockRight->type == Block::Type::leaves &&
-                            blockLeft->type != Block::Type::leaves &&
-                            blockBelow->type == Block::Type::woodLog ) {
-                    DrawTexturePro(texture, getTextureAtlas(2, 0, 32, 32),
-                                   {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
-                                   WHITE);
-                } else if ( blockBelow->type == Block::Type::woodLog ) {
-                    DrawTexturePro(texture, getTextureAtlas(0, 0, 32, 32),
-                                   {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
-                                   WHITE);
-                } else {
-                    DrawTexturePro(texture, getTextureAtlas(4, 0, 32, 32),
-                                   {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
-                                   WHITE);
-                }
+                renderTree(texture, x, y);
             } else {
                 DrawTexturePro(texture, getTextureAtlas(b.type, 0, 32, 32),
                                {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f}, 0.f,
@@ -206,6 +169,41 @@ void closeGame() {
     std::ofstream f(RESOURCES_PATH "f.txt");
     f << "\nCLOSED\n";
     f.close();
+}
+
+void renderTree(Texture2D texture, int x, int y) {
+    auto blockAbove = gameData.gameMap.getBlockSafe(x, y - 1);
+    auto blockLeft  = gameData.gameMap.getBlockSafe(x - 1, y);
+    auto blockRight = gameData.gameMap.getBlockSafe(x + 1, y);
+    auto blockBelow = gameData.gameMap.getBlockSafe(x, y + 1);
+    if ( blockBelow->type == Block::Type::woodLog &&
+         blockLeft->type == Block::Type::leaves &&
+         blockRight->type == Block::Type::leaves &&
+         blockAbove->type == Block::Type::leaves ) {
+        DrawTexturePro(texture, getTextureAtlas(5, 0, 32, 32),
+                       {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f}, 0.f, WHITE);
+    } else if ( blockLeft->type == Block::Type::leaves &&
+                blockRight->type == Block::Type::leaves &&
+                blockBelow->type == Block::Type::woodLog ) {
+        DrawTexturePro(texture, getTextureAtlas(1, 0, 32, 32),
+                       {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
+    } else if ( blockLeft->type == Block::Type::leaves &&
+                blockRight->type != Block::Type::leaves &&
+                blockBelow->type == Block::Type::woodLog ) {
+        DrawTexturePro(texture, getTextureAtlas(3, 0, 32, 32),
+                       {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
+    } else if ( blockRight->type == Block::Type::leaves &&
+                blockLeft->type != Block::Type::leaves &&
+                blockBelow->type == Block::Type::woodLog ) {
+        DrawTexturePro(texture, getTextureAtlas(2, 0, 32, 32),
+                       {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
+    } else if ( blockBelow->type == Block::Type::woodLog ) {
+        DrawTexturePro(texture, getTextureAtlas(0, 0, 32, 32),
+                       {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
+    } else {
+        DrawTexturePro(texture, getTextureAtlas(4, 0, 32, 32),
+                       {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
+    }
 }
 
 void startDebugMenu(char *id, const size_t idSize, uint16_t *blockID) {
