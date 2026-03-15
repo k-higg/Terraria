@@ -96,13 +96,16 @@ bool updateGame() {
         }
 
         if ( IsMouseButtonDown(MOUSE_BUTTON_RIGHT) ) {
-            auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
-            auto w = gameData.gameMap.getWallSafe(blockX, blockY);
-            if ( b ) {
-                *b = {};
-            }
-            if ( w ) {
-                *w = {};
+            if ( IsKeyDown(KEY_LEFT_SHIFT) ) {
+                auto w = gameData.gameMap.getWallSafe(blockX, blockY);
+                if ( w ) {
+                    *w = {};
+                }
+            } else {
+                auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
+                if ( b ) {
+                    *b = {};
+                }
             }
         }
     }
