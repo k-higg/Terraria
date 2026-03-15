@@ -67,16 +67,11 @@ bool updateGame() {
 #pragma endregion
 
 #pragma region Block Selector
-    static char _blockID[3] = "";
+    static char id[3]       = "";
     static uint16_t blockID = 0;
     Block::Type blockType   = Block::Type::air;
-    static char _wallID[3]  = "";
-    static uint16_t wallID  = 0;
-    Wall::Type wallType     = Wall::Type::dirtWall;
-    startDebugMenu(_blockID, sizeof(_blockID), &blockID, _wallID,
-                   sizeof(_wallID), &wallID);
+    startDebugMenu(id, sizeof(id), &blockID);
     blockType = static_cast<Block::Type>(blockID);
-    wallType  = static_cast<Wall::Type>(wallID);
 
 #pragma endregion
 
@@ -87,10 +82,10 @@ bool updateGame() {
 
     if ( !ImGui::IsWindowHovered() || !ImGui::IsWindowFocused() ) {
         if ( IsMouseButtonDown(MOUSE_BUTTON_LEFT) ) {
-            if ( IsKeyDown(KEY_LEFT_SHIFT) ) {
+            if ( blockID > 53 && blockID <= Block::Type::BLOCKS_COUNT - 1 ) {
                 auto w = gameData.gameMap.getWallSafe(blockX, blockY);
                 if ( w ) {
-                    w->type = wallType;
+                    w->type = blockType;
                 }
             } else {
                 auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
@@ -101,16 +96,13 @@ bool updateGame() {
         }
 
         if ( IsMouseButtonDown(MOUSE_BUTTON_RIGHT) ) {
-            if ( IsKeyDown(KEY_LEFT_SHIFT) ) {
-                auto w = gameData.gameMap.getWallSafe(blockX, blockY);
-                if ( w ) {
-                    *w = {};
-                }
-            } else {
-                auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
-                if ( b ) {
-                    *b = {};
-                }
+            auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
+            auto w = gameData.gameMap.getWallSafe(blockX, blockY);
+            if ( b ) {
+                *b = {};
+            }
+            if ( w ) {
+                *w = {};
             }
         }
     }
@@ -210,46 +202,26 @@ void closeGame() {
     f.close();
 }
 
-void startDebugMenu(char *_blockID, const size_t idSize, uint16_t *blockID,
-                    char *_wallID, const size_t wallIDSize, uint16_t *wallID) {
+void startDebugMenu(char *id, const size_t idSize, uint16_t *blockID) {
     ImGui::Begin("Debug Menu");
     ImGui::Text("Block ID: ");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(110.f);
-    ImGui::InputTextWithHint("###blockID", "0 - 53", _blockID, 3);
+    ImGui::InputTextWithHint("###blockID", "0 - 71", id, 3);
     ImGui::SameLine();
     if ( ImGui::SmallButton("Clear####blockIDclear") ) {
-        _blockID[0] = '\0';
-        *blockID    = 0;
+        id[0]    = '\0';
+        *blockID = 0;
     }
-    if ( strlen(_blockID) > 0 ) {
+    if ( strlen(id) > 0 ) {
         try {
-            *blockID = static_cast<uint16_t>(std::stoi(_blockID));
+            *blockID = static_cast<uint16_t>(std::stoi(id));
         } catch ( std::invalid_argument const &e ) {
-            _blockID[0] = '\0';
-            *blockID    = 0;
+            id[0]    = '\0';
+            *blockID = 0;
         }
     }
     *blockID = std::min(*blockID, (uint16_t)(Block::BLOCKS_COUNT - 1));
-
-    ImGui::Text("Wall ID: ");
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(110.f);
-    ImGui::InputTextWithHint("###wallID", "0 - 17", _wallID, 3);
-    ImGui::SameLine();
-    if ( ImGui::SmallButton("Clear###wallIDclear") ) {
-        _wallID[0] = '\0';
-        *wallID    = 0;
-    }
-    if ( strlen(_wallID) > 0 ) {
-        try {
-            *wallID = static_cast<uint16_t>(std::stoi(_wallID));
-        } catch ( std::invalid_argument const &e ) {
-            _wallID[0] = '\0';
-            *wallID    = 0;
-        }
-    }
-    *wallID = std::min(*wallID, (uint16_t)(Wall::BLOCKS_COUNT - 1));
 }
 
 void endDebugMenu() { ImGui::End(); }

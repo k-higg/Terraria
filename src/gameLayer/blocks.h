@@ -57,16 +57,7 @@ struct Block {
         boneWordrobe,
         boneBookShelf,
         bonePlatform,
-
-        BLOCKS_COUNT,
-    };
-
-    Type type = air;
-};
-
-struct Wall {
-    enum Type : std::uint16_t {
-        dirtWall = 0,
+        dirtWall,
         stoneWall,
         woodWall,
         sandStoneWall,
@@ -88,5 +79,5 @@ struct Wall {
         BLOCKS_COUNT,
     };
 
-    Type type = dirtWall;
+    Type type = air;
 };

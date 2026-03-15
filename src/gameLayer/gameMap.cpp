@@ -43,7 +43,7 @@ Block *GameMap::getBlockSafe(int x, int y) {
     return &mapData[x + y * w];
 }
 
-Wall &GameMap::getWallUnsafe(int x, int y) {
+Block &GameMap::getWallUnsafe(int x, int y) {
     permaAssertCommentDevelopement(wallData.size() == w * h,
                                    "Wall data not initialized");
 
@@ -53,7 +53,7 @@ Wall &GameMap::getWallUnsafe(int x, int y) {
     return wallData[x + y * w];
 }
 
-Wall *GameMap::getWallSafe(int x, int y) {
+Block *GameMap::getWallSafe(int x, int y) {
     permaAssertCommentDevelopement(wallData.size() == w * h,
                                    "Wall data not initialized");
 
