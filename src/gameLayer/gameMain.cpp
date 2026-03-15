@@ -158,17 +158,20 @@ bool updateGame() {
                                    {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f},
                                    0.f, WHITE);
                 } else if ( blockLeft->type == Block::Type::leaves &&
-                            blockRight->type == Block::Type::leaves ) {
+                            blockRight->type == Block::Type::leaves &&
+                            blockBelow->type == Block::Type::woodLog ) {
                     DrawTexturePro(texture, getTextureAtlas(1, 0, 32, 32),
                                    {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
                                    WHITE);
                 } else if ( blockLeft->type == Block::Type::leaves &&
-                            blockRight->type != Block::Type::leaves ) {
+                            blockRight->type != Block::Type::leaves &&
+                            blockBelow->type == Block::Type::woodLog ) {
                     DrawTexturePro(texture, getTextureAtlas(3, 0, 32, 32),
                                    {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
                                    WHITE);
                 } else if ( blockRight->type == Block::Type::leaves &&
-                            blockLeft->type != Block::Type::leaves ) {
+                            blockLeft->type != Block::Type::leaves &&
+                            blockBelow->type == Block::Type::woodLog ) {
                     DrawTexturePro(texture, getTextureAtlas(2, 0, 32, 32),
                                    {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f,
                                    WHITE);
