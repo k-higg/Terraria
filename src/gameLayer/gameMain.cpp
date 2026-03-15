@@ -28,13 +28,8 @@ bool initGame() {
 
     gameData.gameMap.create(30, 10);
 
-    gameData.gameMap.getBlockUnsafe(0, 0).type = Block::dirt;
-    gameData.gameMap.getBlockUnsafe(1, 1).type = Block::grass;
-    gameData.gameMap.getBlockUnsafe(2, 2).type = Block::clay;
-    gameData.gameMap.getBlockUnsafe(3, 3).type = Block::platform;
-    gameData.gameMap.getBlockUnsafe(4, 4).type = Block::goldBlock;
-
-    gameData.camera.target   = {0, 0};
+    // if camera target is set to 0,0 you can't place blocks on like half of the screen
+    gameData.camera.target   = {6, 3};
     gameData.camera.rotation = 0.f;
     gameData.camera.zoom     = 100.f;
 
@@ -72,7 +67,6 @@ bool updateGame() {
     Block::Type blockType   = Block::Type::air;
     startDebugMenu(id, sizeof(id), &blockID);
     blockType = static_cast<Block::Type>(blockID);
-
 #pragma endregion
 
 #pragma region Mouse Logic
@@ -112,6 +106,7 @@ bool updateGame() {
     endDebugMenu();
 #pragma endregion
 
+#pragma region Rendering
     BeginMode2D(gameData.camera);
 
     Vector2 topLeftView     = GetScreenToWorld2D({0, 0}, gameData.camera);
@@ -142,7 +137,7 @@ bool updateGame() {
             }
 
             Texture2D texture = b.type == Block::Type::woodLog
-                                    ? assetManager.tree
+                                    ? assetManager.treeTextures
                                     : assetManager.textures;
 
             if ( b.type == Block::Type::woodLog ) {
@@ -161,6 +156,7 @@ bool updateGame() {
                    {(float)blockX, (float)blockY, 1, 1}, {}, 0.f, WHITE);
 
     EndMode2D();
+#pragma endregion
 
     return true;
 }
