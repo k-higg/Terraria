@@ -67,11 +67,16 @@ bool updateGame() {
 #pragma endregion
 
 #pragma region Block Selector
-    static char id[3]       = "";
+    static char _blockID[3] = "";
     static uint16_t blockID = 0;
     Block::Type blockType   = Block::Type::air;
-    startDebugMenu(id, sizeof(id), &blockID);
+    static char _wallID[3]  = "";
+    static uint16_t wallID  = 0;
+    Wall::Type wallType     = Wall::Type::dirtWall;
+    startDebugMenu(_blockID, sizeof(_blockID), &blockID, _wallID,
+                   sizeof(_wallID), &wallID);
     blockType = static_cast<Block::Type>(blockID);
+    wallType  = static_cast<Wall::Type>(wallID);
 
 #pragma endregion
 
@@ -82,20 +87,33 @@ bool updateGame() {
 
     if ( !ImGui::IsWindowHovered() || !ImGui::IsWindowFocused() ) {
         if ( IsMouseButtonDown(MOUSE_BUTTON_LEFT) ) {
-            auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
-            if ( b ) {
-                b->type = blockType;
+            if ( IsKeyDown(KEY_LEFT_SHIFT) ) {
+                auto w = gameData.gameMap.getWallSafe(blockX, blockY);
+                if ( w ) {
+                    w->type = wallType;
+                }
+            } else {
+                auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
+                if ( b ) {
+                    b->type = blockType;
+                }
             }
         }
 
         if ( IsMouseButtonDown(MOUSE_BUTTON_RIGHT) ) {
-            auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
-            if ( b ) {
-                *b = {};
+            if ( IsKeyDown(KEY_LEFT_SHIFT) ) {
+                auto w = gameData.gameMap.getWallSafe(blockX, blockY);
+                if ( w ) {
+                    *w = {};
+                }
+            } else {
+                auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
+                if ( b ) {
+                    *b = {};
+                }
             }
         }
     }
-
     endDebugMenu();
 #pragma endregion
 
@@ -118,6 +136,11 @@ bool updateGame() {
     for ( int y = startYView; y <= endYView; y++ ) {
         for ( int x = startXView; x <= endXView; x++ ) {
             auto &b = gameData.gameMap.getBlockUnsafe(x, y);
+            auto &w = gameData.gameMap.getWallUnsafe(x, y);
+
+            DrawTexturePro(assetManager.backgroundTextures,
+                           getTextureAtlas(w.type, 0, 32, 32),
+                           {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
 
             if ( b.type == Block::Type::air ) {
                 continue;
@@ -127,13 +150,6 @@ bool updateGame() {
                                     ? assetManager.tree
                                     : assetManager.textures;
 
-            // IF woodLog check below, and left/right of current block placement
-            // base case is trunk touching ground
-            // if trunk and no leaves around trunk
-            // if leaves on left and right, trunk with leaves on left and right
-            // if leaves all around trunk with leaves all around
-            // if leaves on left or right, trunk with leaves on left or right
-            // TODO: This sort of works but isn't really what I'm attempting to do
             if ( b.type == Block::Type::woodLog ) {
                 auto blockAbove = gameData.gameMap.getBlockSafe(x, y - 1);
                 auto blockLeft  = gameData.gameMap.getBlockSafe(x - 1, y);
@@ -194,26 +210,46 @@ void closeGame() {
     f.close();
 }
 
-void startDebugMenu(char *id, const size_t idSize, uint16_t *blockID) {
+void startDebugMenu(char *_blockID, const size_t idSize, uint16_t *blockID,
+                    char *_wallID, const size_t wallIDSize, uint16_t *wallID) {
     ImGui::Begin("Debug Menu");
     ImGui::Text("Block ID: ");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(110.f);
-    ImGui::InputTextWithHint("###ID", "0 - 53", id, 3);
+    ImGui::InputTextWithHint("###blockID", "0 - 53", _blockID, 3);
     ImGui::SameLine();
-    if ( ImGui::SmallButton("Clear") ) {
-        id[0]    = '\0';
-        *blockID = 0;
+    if ( ImGui::SmallButton("Clear####blockIDclear") ) {
+        _blockID[0] = '\0';
+        *blockID    = 0;
     }
-    if ( strlen(id) > 0 ) {
+    if ( strlen(_blockID) > 0 ) {
         try {
-            *blockID = static_cast<uint16_t>(std::stoi(id));
+            *blockID = static_cast<uint16_t>(std::stoi(_blockID));
         } catch ( std::invalid_argument const &e ) {
-            id[0]    = '\0';
-            *blockID = 0;
+            _blockID[0] = '\0';
+            *blockID    = 0;
         }
     }
     *blockID = std::min(*blockID, (uint16_t)(Block::BLOCKS_COUNT - 1));
+
+    ImGui::Text("Wall ID: ");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(110.f);
+    ImGui::InputTextWithHint("###wallID", "0 - 17", _wallID, 3);
+    ImGui::SameLine();
+    if ( ImGui::SmallButton("Clear###wallIDclear") ) {
+        _wallID[0] = '\0';
+        *wallID    = 0;
+    }
+    if ( strlen(_wallID) > 0 ) {
+        try {
+            *wallID = static_cast<uint16_t>(std::stoi(_wallID));
+        } catch ( std::invalid_argument const &e ) {
+            _wallID[0] = '\0';
+            *wallID    = 0;
+        }
+    }
+    *wallID = std::min(*wallID, (uint16_t)(Wall::BLOCKS_COUNT - 1));
 }
 
 void endDebugMenu() { ImGui::End(); }

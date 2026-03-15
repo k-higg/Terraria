@@ -63,3 +63,30 @@ struct Block {
 
     Type type = air;
 };
+
+struct Wall {
+    enum Type : std::uint16_t {
+        dirtWall = 0,
+        stoneWall,
+        woodWall,
+        sandStoneWall,
+        brickWall,
+        glassWall,
+        copperBlockWall,
+        silverBlockWall,
+        goldBlockWall,
+        snowWall,
+        sandWall,
+        stoneBricksWall,
+        rubyBlockWall,
+        heroglyphWall,
+        blueRubyWall,
+        plankedWall,
+        snowBrickWall,
+        boneBrickWall,
+
+        BLOCKS_COUNT,
+    };
+
+    Type type = dirtWall;
+};
