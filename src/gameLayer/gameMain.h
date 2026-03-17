@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <ctime>
 
 #include "raylib.h"
 
@@ -10,9 +11,8 @@ bool initGame();
 bool updateGame();
 void closeGame();
 
-void renderTree(Texture2D texture, int x, int y);
+void renderTree(Texture2D texture, int x, int y, uint8_t variant);
 
 void startDebugMenu(char *id, const size_t idSize, uint16_t *blockID);
 void endDebugMenu();
-
 };  // namespace GameLayer

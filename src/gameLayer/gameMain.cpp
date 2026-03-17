@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <ctime>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -12,6 +13,7 @@
 #include "assetManager.h"
 #include "gameMap.h"
 #include "helpers.h"
+#include "randomStuff.h"
 #include "raymath.h"
 
 namespace GameLayer {
@@ -22,6 +24,7 @@ struct GameData {
 } gameData;
 
 AssetManager assetManager;
+std::ranlux24_base rng(static_cast<unsigned>(std::time(nullptr)));
 
 bool initGame() {
     assetManager.loadAll();
@@ -79,12 +82,14 @@ bool updateGame() {
             if ( blockID > 53 && blockID <= Block::Type::BLOCKS_COUNT - 1 ) {
                 auto w = gameData.gameMap.getWallSafe(blockX, blockY);
                 if ( w ) {
-                    w->type = blockType;
+                    w->type    = blockType;
+                    w->variant = getRandomInt(rng, 0, 3);
                 }
             } else {
                 auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
                 if ( b ) {
-                    b->type = blockType;
+                    b->type    = blockType;
+                    b->variant = getRandomInt(rng, 0, 3);
                 }
             }
         }
@@ -119,9 +124,9 @@ bool updateGame() {
     int endYView   = (int)ceilf(bottomRightView.y + 1);
 
     startXView = Clamp(startXView, 0, gameData.gameMap.w - 1);
-    endXView   = Clamp(endXView, 0, bottomRightView.x - 1);
+    endXView   = Clamp(endXView, 0, gameData.gameMap.w - 1);
     startYView = Clamp(startYView, 0, gameData.gameMap.h - 1);
-    endYView   = Clamp(endYView, 0, bottomRightView.y - 1);
+    endYView   = Clamp(endYView, 0, gameData.gameMap.h - 1);
 
     for ( int y = startYView; y <= endYView; y++ ) {
         for ( int x = startXView; x <= endXView; x++ ) {
@@ -129,7 +134,7 @@ bool updateGame() {
             auto &w = gameData.gameMap.getWallUnsafe(x, y);
 
             DrawTexturePro(assetManager.backgroundTextures,
-                           getTextureAtlas(w.type, 0, 32, 32),
+                           getTextureAtlas(w.type, w.variant, 32, 32),
                            {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
 
             if ( b.type == Block::Type::air ) {
@@ -141,11 +146,11 @@ bool updateGame() {
                                     : assetManager.textures;
 
             if ( b.type == Block::Type::woodLog ) {
-                renderTree(texture, x, y);
+                renderTree(texture, x, y, b.variant);
             } else {
-                DrawTexturePro(texture, getTextureAtlas(b.type, 0, 32, 32),
-                               {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f}, 0.f,
-                               WHITE);
+                DrawTexturePro(
+                    texture, getTextureAtlas(b.type, b.variant, 32, 32),
+                    {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f}, 0.f, WHITE);
             }
         }
     }
@@ -167,7 +172,7 @@ void closeGame() {
     f.close();
 }
 
-void renderTree(Texture2D texture, int x, int y) {
+void renderTree(Texture2D texture, int x, int y, uint8_t variant) {
     auto blockAbove = gameData.gameMap.getBlockSafe(x, y - 1);
     auto blockLeft  = gameData.gameMap.getBlockSafe(x - 1, y);
     auto blockRight = gameData.gameMap.getBlockSafe(x + 1, y);
@@ -176,28 +181,28 @@ void renderTree(Texture2D texture, int x, int y) {
          blockLeft->type == Block::Type::leaves &&
          blockRight->type == Block::Type::leaves &&
          blockAbove->type == Block::Type::leaves ) {
-        DrawTexturePro(texture, getTextureAtlas(5, 0, 32, 32),
+        DrawTexturePro(texture, getTextureAtlas(5, variant, 32, 32),
                        {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f}, 0.f, WHITE);
     } else if ( blockLeft->type == Block::Type::leaves &&
                 blockRight->type == Block::Type::leaves &&
                 blockBelow->type == Block::Type::woodLog ) {
-        DrawTexturePro(texture, getTextureAtlas(1, 0, 32, 32),
+        DrawTexturePro(texture, getTextureAtlas(1, variant, 32, 32),
                        {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
     } else if ( blockLeft->type == Block::Type::leaves &&
                 blockRight->type != Block::Type::leaves &&
                 blockBelow->type == Block::Type::woodLog ) {
-        DrawTexturePro(texture, getTextureAtlas(3, 0, 32, 32),
+        DrawTexturePro(texture, getTextureAtlas(3, variant, 32, 32),
                        {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
     } else if ( blockRight->type == Block::Type::leaves &&
                 blockLeft->type != Block::Type::leaves &&
                 blockBelow->type == Block::Type::woodLog ) {
-        DrawTexturePro(texture, getTextureAtlas(2, 0, 32, 32),
+        DrawTexturePro(texture, getTextureAtlas(2, variant, 32, 32),
                        {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
     } else if ( blockBelow->type == Block::Type::woodLog ) {
-        DrawTexturePro(texture, getTextureAtlas(0, 0, 32, 32),
+        DrawTexturePro(texture, getTextureAtlas(0, variant, 32, 32),
                        {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
     } else {
-        DrawTexturePro(texture, getTextureAtlas(4, 0, 32, 32),
+        DrawTexturePro(texture, getTextureAtlas(4, variant, 32, 32),
                        {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
     }
 }

@@ -79,5 +79,6 @@ struct Block {
         BLOCKS_COUNT,
     };
 
-    Type type = air;
+    Type type       = air;
+    uint8_t variant = 0;
 };
