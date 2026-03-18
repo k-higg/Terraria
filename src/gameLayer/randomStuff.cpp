@@ -11,7 +11,7 @@ int getRandomInt(std::ranlux24_base &rng, int min, int max) {
     return dist(rng);
 }
 
-bool getRandomChoice(std::ranlux24_base &rng, float chance) {
+bool getRandomChance(std::ranlux24_base &rng, float chance) {
     float dice = getRandomFloat(rng, 0.0, 1.0);
     return dice <= chance;
 }

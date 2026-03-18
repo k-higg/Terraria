@@ -2,11 +2,13 @@
 
 #include <imgui.h>
 #include <raylib.h>
+#include <raymath.h>
 
 #include <algorithm>
 #include <cmath>
 #include <ctime>
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 
@@ -14,25 +16,25 @@
 #include "gameMap.h"
 #include "helpers.h"
 #include "randomStuff.h"
-#include "raymath.h"
+#include "worldGenerator.h"
 
 namespace GameLayer {
 
 struct GameData {
     GameMap gameMap;
-    Camera2D camera;
+    Camera2D camera = {};
 } gameData;
 
 AssetManager assetManager;
-std::ranlux24_base rng(static_cast<unsigned>(std::time(nullptr)));
+unsigned seed = static_cast<unsigned>(std::time(nullptr));
+std::ranlux24_base rng(seed);
 
 bool initGame() {
     assetManager.loadAll();
 
-    gameData.gameMap.create(30, 10);
+    generateWorld(gameData.gameMap, seed);
 
-    // if camera target is set to 0,0 you can't place blocks on like half of the screen
-    gameData.camera.target   = {6, 3};
+    gameData.camera.target   = {0, 70};
     gameData.camera.rotation = 0.f;
     gameData.camera.zoom     = 100.f;
 
@@ -50,26 +52,26 @@ bool updateGame() {
     ClearBackground({75, 75, 150, 255});
 
 #pragma region Camera Movement
+    static float CAMERA_SPEED = 10.f;
     if ( IsKeyDown(KEY_UP) ) {
-        gameData.camera.target.y -= 7.f * deltaTime;
+        gameData.camera.target.y -= CAMERA_SPEED * deltaTime;
     }
     if ( IsKeyDown(KEY_LEFT) ) {
-        gameData.camera.target.x -= 7.f * deltaTime;
+        gameData.camera.target.x -= CAMERA_SPEED * deltaTime;
     }
     if ( IsKeyDown(KEY_DOWN) ) {
-        gameData.camera.target.y += 7.f * deltaTime;
+        gameData.camera.target.y += CAMERA_SPEED * deltaTime;
     }
     if ( IsKeyDown(KEY_RIGHT) ) {
-        gameData.camera.target.x += 7.f * deltaTime;
+        gameData.camera.target.x += CAMERA_SPEED * deltaTime;
     }
 #pragma endregion
 
 #pragma region Block Selector
-    static char id[3]       = "";
-    static uint16_t blockID = 0;
-    Block::Type blockType   = Block::Type::air;
-    startDebugMenu(id, sizeof(id), &blockID);
-    blockType = static_cast<Block::Type>(blockID);
+    static char id[3]            = "";
+    static uint16_t blockID      = 0;
+    static Block::Type blockType = Block::Type::air;
+    blockType                    = static_cast<Block::Type>(blockID);
 #pragma endregion
 
 #pragma region Mouse Logic
@@ -79,6 +81,7 @@ bool updateGame() {
 
     if ( !ImGui::IsWindowHovered() || !ImGui::IsWindowFocused() ) {
         if ( IsMouseButtonDown(MOUSE_BUTTON_LEFT) ) {
+            std::cout << "X: " << blockX << " Y: " << blockY << std::endl;
             if ( blockID > 53 && blockID <= Block::Type::BLOCKS_COUNT - 1 ) {
                 auto w = gameData.gameMap.getWallSafe(blockX, blockY);
                 if ( w ) {
@@ -108,7 +111,6 @@ bool updateGame() {
             }
         }
     }
-    endDebugMenu();
 #pragma endregion
 
 #pragma region Rendering
@@ -137,19 +139,9 @@ bool updateGame() {
                            getTextureAtlas(w.type, w.variant, 32, 32),
                            {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
 
-            if ( b.type == Block::Type::air ) {
-                continue;
-            }
-
-            Texture2D texture = b.type == Block::Type::woodLog
-                                    ? assetManager.treeTextures
-                                    : assetManager.textures;
-
-            if ( b.type == Block::Type::woodLog ) {
-                renderTree(texture, x, y, b.variant);
-            } else {
+            if ( b.type != Block::Type::air ) {
                 DrawTexturePro(
-                    texture, getTextureAtlas(b.type, b.variant, 32, 32),
+                    assetManager.textures, getTextureAtlas(b.type, 0, 32, 32),
                     {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f}, 0.f, WHITE);
             }
         }
@@ -159,9 +151,44 @@ bool updateGame() {
                    {0, 0, (float)assetManager.frame.width,
                     (float)assetManager.frame.height},
                    {(float)blockX, (float)blockY, 1, 1}, {}, 0.f, WHITE);
-
     EndMode2D();
+
 #pragma endregion
+
+#pragma region Debug Menu
+
+    ImGui::Begin("Debug Menu");
+    ImGui::Text("Block ID: ");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(110.f);
+    ImGui::InputTextWithHint("###blockID", "0 - 71", id, 3);
+    ImGui::SameLine();
+    if ( ImGui::SmallButton("Clear####blockIDclear") ) {
+        id[0]   = '\0';
+        blockID = 0;
+    }
+    if ( strlen(id) > 0 ) {
+        try {
+            blockID = static_cast<uint16_t>(std::stoi(id));
+        } catch ( std::invalid_argument const &e ) {
+            id[0]   = '\0';
+            blockID = 0;
+        }
+    }
+    blockID = std::min(blockID, (uint16_t)(Block::BLOCKS_COUNT - 1));
+    ImGui::Text("Camera Zoom: ");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(150.f);
+    ImGui::SliderFloat("###Camera Zoom", &gameData.camera.zoom, 1.f, 100.f);
+    ImGui::Text("Camera Speed: ");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(150.f);
+    ImGui::SliderFloat("###Camera Speed", &CAMERA_SPEED, 5, 150);
+    ImGui::End();
+
+#pragma endregion
+
+    DrawFPS(10, 10);
 
     return true;
 }
@@ -171,64 +198,5 @@ void closeGame() {
     f << "\nCLOSED\n";
     f.close();
 }
-
-void renderTree(Texture2D texture, int x, int y, uint8_t variant) {
-    auto blockAbove = gameData.gameMap.getBlockSafe(x, y - 1);
-    auto blockLeft  = gameData.gameMap.getBlockSafe(x - 1, y);
-    auto blockRight = gameData.gameMap.getBlockSafe(x + 1, y);
-    auto blockBelow = gameData.gameMap.getBlockSafe(x, y + 1);
-    if ( blockBelow->type == Block::Type::woodLog &&
-         blockLeft->type == Block::Type::leaves &&
-         blockRight->type == Block::Type::leaves &&
-         blockAbove->type == Block::Type::leaves ) {
-        DrawTexturePro(texture, getTextureAtlas(5, variant, 32, 32),
-                       {(float)x, (float)y, 1.f, 1.f}, {0.f, 0.f}, 0.f, WHITE);
-    } else if ( blockLeft->type == Block::Type::leaves &&
-                blockRight->type == Block::Type::leaves &&
-                blockBelow->type == Block::Type::woodLog ) {
-        DrawTexturePro(texture, getTextureAtlas(1, variant, 32, 32),
-                       {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
-    } else if ( blockLeft->type == Block::Type::leaves &&
-                blockRight->type != Block::Type::leaves &&
-                blockBelow->type == Block::Type::woodLog ) {
-        DrawTexturePro(texture, getTextureAtlas(3, variant, 32, 32),
-                       {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
-    } else if ( blockRight->type == Block::Type::leaves &&
-                blockLeft->type != Block::Type::leaves &&
-                blockBelow->type == Block::Type::woodLog ) {
-        DrawTexturePro(texture, getTextureAtlas(2, variant, 32, 32),
-                       {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
-    } else if ( blockBelow->type == Block::Type::woodLog ) {
-        DrawTexturePro(texture, getTextureAtlas(0, variant, 32, 32),
-                       {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
-    } else {
-        DrawTexturePro(texture, getTextureAtlas(4, variant, 32, 32),
-                       {(float)x, (float)y, 1, 1}, {0.f, 0.f}, 0.f, WHITE);
-    }
-}
-
-void startDebugMenu(char *id, const size_t idSize, uint16_t *blockID) {
-    ImGui::Begin("Debug Menu");
-    ImGui::Text("Block ID: ");
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(110.f);
-    ImGui::InputTextWithHint("###blockID", "0 - 71", id, 3);
-    ImGui::SameLine();
-    if ( ImGui::SmallButton("Clear####blockIDclear") ) {
-        id[0]    = '\0';
-        *blockID = 0;
-    }
-    if ( strlen(id) > 0 ) {
-        try {
-            *blockID = static_cast<uint16_t>(std::stoi(id));
-        } catch ( std::invalid_argument const &e ) {
-            id[0]    = '\0';
-            *blockID = 0;
-        }
-    }
-    *blockID = std::min(*blockID, (uint16_t)(Block::BLOCKS_COUNT - 1));
-}
-
-void endDebugMenu() { ImGui::End(); }
 
 };  // namespace GameLayer
