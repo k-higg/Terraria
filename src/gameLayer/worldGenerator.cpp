@@ -1,6 +1,9 @@
 #include "worldGenerator.h"
 
-#include <cmath>
+#include <FastNoiseSIMD.h>
+#include <raymath.h>
+
+#include <memory>
 
 #include "randomStuff.h"
 
@@ -12,58 +15,70 @@ void generateWorld(GameMap &gameMap, int seed) {
 
     gameMap.create(w, h);
 
-    int dirtSizeMin  = 0;
-    int dirtSizeMax  = 50;
-    int stoneSizeMin = 380;
-    int stoneSizeMax = 430;
-
-    int dirtSize    = 50;
-    int stoneSize   = 380;
-    int targetDirt  = dirtSize;
-    int targetStone = stoneSize;
-
     std::ranlux24_base rng(seed);
 
-    int nextTargetX       = 0;
-    const float smoothing = 0.08f;  // lower == smoother
+    std::unique_ptr<FastNoiseSIMD> dirtNoiseGenerator(
+        FastNoiseSIMD::NewFastNoiseSIMD());
+    std::unique_ptr<FastNoiseSIMD> stoneNoiseGenerator(
+        FastNoiseSIMD::NewFastNoiseSIMD());
+
+    dirtNoiseGenerator->SetSeed(seed++);
+    stoneNoiseGenerator->SetSeed(seed++);
+
+    dirtNoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
+    dirtNoiseGenerator->SetFractalOctaves(1);
+    dirtNoiseGenerator->SetFrequency(0.02);
+
+    stoneNoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
+    stoneNoiseGenerator->SetFractalOctaves(4);
+    stoneNoiseGenerator->SetFrequency(0.01);
+
+    float *dirtNoise  = FastNoiseSIMD::GetEmptySet(w);
+    float *stoneNoise = FastNoiseSIMD::GetEmptySet(w);
+
+    dirtNoiseGenerator->FillNoiseSet(dirtNoise, 0, 0, 0, w, 1, 1);
+    stoneNoiseGenerator->FillNoiseSet(stoneNoise, 0, 0, 0, w, 1, 1);
+
+    // convert from [-1 +] to [0 1]
+    for ( int i = 0; i < w; i++ ) {
+        dirtNoise[i]  = (dirtNoise[i] + 1) / 2;
+        stoneNoise[i] = (stoneNoise[i] + 1) / 2;
+
+        // stoneNoise[i] = std::pow(stoneNoise[i], 2); //  steeper mountains
+    }
+
+    int dirtOffsetStart = -5;
+    int dirtOffsetEnd   = 35;
+
+    int stoneHeightStart = 80;
+    int stoneHeightEnd   = 170;
 
     for ( int x = 0; x < w; x++ ) {
-        if ( x >= nextTargetX ) {
-            nextTargetX = x + 50;
-
-            if ( getRandomFloat(rng, 0, 1) < 0.5f ) {
-                targetDirt = 0;
-            } else {
-                targetDirt = static_cast<int>(
-                    getRandomFloat(rng, dirtSizeMin, dirtSizeMax));
-            }
-            targetStone = static_cast<int>(
-                getRandomFloat(rng, stoneSizeMin, stoneSizeMax));
-        }
-
-        dirtSize += static_cast<int>((targetDirt - dirtSize) * smoothing);
-        stoneSize += static_cast<int>((targetStone - stoneSize) * smoothing);
-        int targetY = h - (dirtSize + stoneSize);
+        int dirtHeight = (int)Lerp((float)dirtOffsetStart, (float)dirtOffsetEnd,
+                                   (float)dirtNoise[x]);
+        int stoneHeight =
+            (int)Lerp((float)stoneHeightStart, (float)stoneHeightEnd,
+                      (float)stoneNoise[x]);
+        dirtHeight = stoneHeight - dirtHeight;
 
         for ( int y = 0; y < h; y++ ) {
             Block b;
 
-            if ( y < targetY ) {
-                b.type = Block::Type::air;
-            } else if ( y == targetY && dirtSize >= 1 ) {
-                b.type = Block::Type::grassBlock;
-            } else if ( y < h - stoneSize ) {
+            if ( y > dirtHeight ) {
                 b.type = Block::Type::dirt;
-            } else {
+            }
+            if ( y == dirtHeight ) {
+                b.type = Block::Type::grassBlock;
+            }
+            if ( y >= stoneHeight ) {
                 b.type = Block::Type::stone;
-
-                if ( getRandomChance(rng, 0.05) ) {
-                    b.type = Block::Type::gold;
-                }
             }
 
             gameMap.getBlockUnsafe(x, y) = b;
         }
     }
+
+    FastNoiseSIMD::FreeNoiseSet(dirtNoise);
+    FastNoiseSIMD::FreeNoiseSet(stoneNoise);
 }
 };  // namespace GameLayer

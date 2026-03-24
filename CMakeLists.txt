@@ -23,6 +23,7 @@ project(Terraria)
 add_subdirectory(thirdParty/raylib-5.0)
 add_subdirectory(thirdParty/imgui-docking)
 add_subdirectory(thirdParty/rlimgui)
+add_subdirectory(thirdParty/FastNoiseSIMD)
 
 # define sources
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
@@ -73,4 +74,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     raylib_static 
     imgui 
     rlimgui
+    fastNoiseSIMD
 )

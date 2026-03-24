@@ -34,7 +34,7 @@ bool initGame() {
 
     generateWorld(gameData.gameMap, seed);
 
-    gameData.camera.target   = {0, 70};
+    gameData.camera.target   = {20, 120};
     gameData.camera.rotation = 0.f;
     gameData.camera.zoom     = 100.f;
 
