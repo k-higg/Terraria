@@ -4,26 +4,28 @@
 #include <raymath.h>
 
 #include <memory>
+#include <unordered_set>
 
 #include "randomStuff.h"
 
 namespace GameLayer {
 
 void generateWorld(GameMap &gameMap, int seed) {
-    const int w = 900;
-    const int h = 500;
+    constexpr int w = 900;
+    constexpr int h = 500;
 
     gameMap.create(w, h);
-
 
     std::ranlux24_base rng(seed++);
 
     const std::unique_ptr<FastNoiseSIMD> dirtNoiseGenerator(
         FastNoiseSIMD::NewFastNoiseSIMD());
     const std::unique_ptr<FastNoiseSIMD> caveNoiseGenerator(FastNoiseSIMD::NewFastNoiseSIMD());
+    const std::unique_ptr<FastNoiseSIMD> wormNoiseNoiseGenerator(FastNoiseSIMD::NewFastNoiseSIMD());
 
     dirtNoiseGenerator->SetSeed(seed++);
     caveNoiseGenerator->SetSeed(seed++);
+    wormNoiseNoiseGenerator->SetSeed(seed++);
 
     dirtNoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
     dirtNoiseGenerator->SetFractalOctaves(6);
@@ -34,24 +36,54 @@ void generateWorld(GameMap &gameMap, int seed) {
     caveNoiseGenerator->SetFractalOctaves(3);
     caveNoiseGenerator->SetFrequency(0.02f);
 
+    wormNoiseNoiseGenerator->SetNoiseType(FastNoiseSIMD::NoiseType::Perlin);
+    wormNoiseNoiseGenerator->SetFractalOctaves(4);
+    wormNoiseNoiseGenerator->SetFrequency(0.04f);
+
     float *dirtNoise  = FastNoiseSIMD::GetEmptySet(w);
     float *caveNoise  = FastNoiseSIMD::GetEmptySet(w * h);
+    float *wormNoise = FastNoiseSIMD::GetEmptySet(w * h);
 
     dirtNoiseGenerator->FillNoiseSet(dirtNoise, 0, 0, 0, w, 1, 1);
     caveNoiseGenerator->FillNoiseSet(caveNoise, 0, 0, 0, h, w, 1);
+    wormNoiseNoiseGenerator->FillNoiseSet(wormNoise, 0, 0, 0, h, w, 1);
 
-    // convert from [-1 +] to [0 1]
+    // convert from [-1 1] to [0 1]
     for ( int i = 0; i < w; i++ ) {
         dirtNoise[i]  = (dirtNoise[i] + 1) / 2;
     }
 
-    // convert from [-1 +] to [0 1]
+    // convert from [-1 1] to [0 1]
     for (int i{}; i < w * h; i++ ) {
         caveNoise[i]  = (caveNoise[i] + 1) / 2;
+        wormNoise[i]  = (wormNoise[i] + 1) / 2;
     }
 
     auto getCaveNoise = [&](const int x, const int y) {
       return caveNoise[x + y * w];
+    };
+
+    // TODO: edit this to be semi random movement
+    // TODO: keep track of visited blocks or previous direction?
+
+    std::unordered_set<long long> visited;
+
+    auto packKey = [](const int x, const int y) {
+        return (static_cast<long long>(x) << 32) | static_cast<unsigned int>(y);
+    };
+
+    auto getPerlinWorm = [&](int x, int y) {
+        if (getRandomChance(rng, 0.5f)) {
+            do {
+                y = y + getRandomInt(rng, -1, 1);
+            } while ( visited.contains(packKey(x, y)));
+        } else {
+            do {
+                x = x + getRandomInt(rng, -1, 1);
+            } while (visited.contains(packKey(x, y)));
+        }
+        visited.insert(packKey(x, y));
+        return wormNoise[x + y * w];
     };
 
     constexpr int dirtOffsetStart = -5;
@@ -66,6 +98,9 @@ void generateWorld(GameMap &gameMap, int seed) {
     constexpr int dirStoneMin = -2;
     constexpr int dirStoneMax = 2;
 
+    constexpr int wormMin = 70;
+    constexpr int wormMax = 450;
+
     const int desertStart = getRandomInt(rng, desertWidthMin, w - 100);
     const int desertEnd = desertStart + desertWidthMax + getRandomInt(rng, 0, 100);
 
@@ -75,8 +110,7 @@ void generateWorld(GameMap &gameMap, int seed) {
     int stoneHeight = 90;
 
     for ( int x = 0; x < w; x++ ) {
-
-        bool inDesert = (x >= desertStart && x <= desertEnd);
+        const bool inDesert = (x >= desertStart && x <= desertEnd);
 
 #pragma region Stone Height
         keepDirTimeStone--;
@@ -162,11 +196,14 @@ void generateWorld(GameMap &gameMap, int seed) {
                 }
             }
 
-            // bigger more interesting caves
-            // getCaveNoise(x,y) < 0.8f &&& getCaveNoise(x,y) > 0.6f
-
-            if ( getCaveNoise(x, y) < 0.3f) {
+            if ( getCaveNoise(x,y) < 0.8f && getCaveNoise(x,y) > 0.6f ) {
                 b.type = Block::Type::air;
+            }
+
+            if (y >= wormMin && y <= wormMax && b.type != Block::Type::air) {
+                if ( getPerlinWorm(x, y) < 0.25f) {
+                    b.type = Block::Type::air;
+                }
             }
 
             gameMap.getBlockUnsafe(x, y) = b;
@@ -175,5 +212,6 @@ void generateWorld(GameMap &gameMap, int seed) {
 
     FastNoiseSIMD::FreeNoiseSet(dirtNoise);
     FastNoiseSIMD::FreeNoiseSet(caveNoise);
+    FastNoiseSIMD::FreeNoiseSet(wormNoise);
 }
 };  // namespace GameLayer
