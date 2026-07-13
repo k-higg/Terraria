@@ -20,14 +20,25 @@
 
 namespace GameLayer {
 
+#pragma region Variables
+
 struct GameData {
     GameMap gameMap;
     Camera2D camera = {};
 } gameData;
 
+struct UIData {
+    ImVec2 uiPos;
+    ImVec2 uiSize;
+} uiData;
+
+bool mouseOverUI = false;
+
 AssetManager assetManager;
 unsigned seed = static_cast<unsigned>(std::time(nullptr));
 std::ranlux24_base rng(seed);
+
+#pragma endregion
 
 bool initGame() {
     assetManager.loadAll();
@@ -75,11 +86,11 @@ bool updateGame() {
 #pragma endregion
 
 #pragma region Mouse Logic
-    Vector2 worldPos = GetScreenToWorld2D(GetMousePosition(), gameData.camera);
-    int blockX       = (int)floor(worldPos.x);
-    int blockY       = (int)floor(worldPos.y);
+    const Vector2 worldPos = GetScreenToWorld2D(GetMousePosition(), gameData.camera);
+    const int blockX       = (int)floor(worldPos.x);
+    const int blockY       = (int)floor(worldPos.y);
 
-    if ( !ImGui::IsWindowHovered() || !ImGui::IsWindowFocused() ) {
+    if ( !mouseOverUI ) {
         if ( IsMouseButtonDown(MOUSE_BUTTON_LEFT) ) {
             std::cout << "X: " << blockX << " Y: " << blockY << std::endl;
             if ( blockID > 53 && blockID <= Block::Type::BLOCKS_COUNT - 1 ) {
@@ -184,6 +195,12 @@ bool updateGame() {
     ImGui::SameLine();
     ImGui::SetNextItemWidth(150.f);
     ImGui::SliderFloat("###Camera Speed", &CAMERA_SPEED, 5, 150);
+
+    uiData.uiPos = ImGui::GetWindowPos();
+    uiData.uiSize = ImGui::GetWindowSize();
+
+    mouseOverUI = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup);
+
     ImGui::End();
 
 #pragma endregion
