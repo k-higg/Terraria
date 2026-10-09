@@ -63,9 +63,6 @@ void generateWorld(GameMap &gameMap, int seed) {
       return caveNoise[x + y * w];
     };
 
-    // TODO: edit this to be semi random movement
-    // TODO: keep track of visited blocks or previous direction?
-
     std::unordered_set<long long> visited;
 
     auto packKey = [](const int x, const int y) {
